@@ -13,12 +13,11 @@
 
 ## 📚 Overview
 
-AskMira is a specialized AI-powered assistant developed for Northeastern University's Foreign Credit Evaluation (FCE) department. It combines Retrieval Augmented Generation (RAG) technology with Northeastern's specific FCE regulations to help staff, faculty, and students navigate the complex world of international education credential evaluation efficiently and accurately.
+AskMira is a specialized AI-powered assistant developed for XYZ's Foreign Credit Evaluation (FCE) department. It combines Retrieval Augmented Generation (RAG) technology with XYZ's specific FCE regulations to help staff, faculty, and students navigate the complex world of international education credential evaluation efficiently and accurately.
 
 ### Key Features
 
 - **Natural Language Queries**: Ask about international credentials in plain English
-- **Northeastern-Specific Knowledge**: Access information from AACRAO EDGE combined with Northeastern's proprietary FCE regulations
 - **Interactive UI**: User-friendly Streamlit interface for intuitive interactions
 - **API Access**: FastAPI backend for programmatic integration
 - **Vector Search**: Pinecone-powered semantic search for accurate information retrieval
