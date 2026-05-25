@@ -16,6 +16,16 @@ services:
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_ENV=${PINECONE_ENV}
       - PINECONE_INDEX=${PINECONE_INDEX}
+      # --- NEW: Postgres connection (replaces Snowflake) ---
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+    # --- NEW: wait for Postgres to be ready before starting FastAPI ---
+    depends_on:
+      - postgres
     restart: always
 
   streamlit:
@@ -37,3 +47,18 @@ services:
     depends_on:
       - fastapi
     restart: always
+
+  # --- NEW: Postgres database service (replaces external Snowflake) ---
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+# --- NEW: named volume so Postgres data persists across restarts ---
+volumes:
+  postgres_data:

@@ -5,11 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 
-from jwtauth import router as auth_router
+from FastAPI.jwtauth import router as auth_router
 
 # load .env at project root
 load_dotenv()
 
+# creating the server
 app = FastAPI(title="AskMira Auth Service")
 
 # CORS – allow your Streamlit front end
@@ -17,10 +18,12 @@ origins = [
     os.getenv("FRONTEND_URL", "http://localhost:8501"),
     os.getenv("FRONTEND_URL", "http://127.0.0.1:8501"),
 ]
+
+# Allow frontend to communicate with backend (CORS setup)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=True,  # allow login cookies / tokens
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,6 +35,8 @@ app.include_router(auth_router, prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
+
+# test route to check backend is running
 @app.get("/", tags=["root"])
 async def read_root():
     return {"message": "Welcome to AskMira Auth Service"}

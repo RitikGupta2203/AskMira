@@ -29,7 +29,7 @@ AskMira is a specialized AI-powered assistant developed for Northeastern's Forei
 
 - Docker and Docker Compose
 - AWS account with S3 access (for document storage)
-- Snowflake account (for database operations)
+- PostgreSQL (runs automatically as a Docker service — no manual install needed)
 - OpenAI API key
 - Pinecone API key and index
 
@@ -51,12 +51,13 @@ AskMira is a specialized AI-powered assistant developed for Northeastern's Forei
    PINECONE_API_KEY=your-pinecone-key
    PINECONE_ENV=your-pinecone-env
    PINECONE_INDEX=askmira-index
-   FASTAPI_URL=http://localhost:8000
-   SNOWFLAKE_USER=your-snowflake-user
-   SNOWFLAKE_PASSWORD=your-snowflake-password
-   SNOWFLAKE_ACCOUNT=your-snowflake-account
-   SNOWFLAKE_DATABASE=your-snowflake-database
-   SNOWFLAKE_WAREHOUSE=your-snowflake-warehouse
+   FASTAPI_URL=http://fastapi:8000
+   POSTGRES_HOST=postgres
+   POSTGRES_PORT=5432
+   POSTGRES_USER=askmira
+   POSTGRES_PASSWORD=your-strong-password
+   POSTGRES_DB=askmira_db
+   SECRET_KEY=any-long-random-string-for-jwt
    ```
 
 ### Running Locally
@@ -96,19 +97,18 @@ AskMira uses a modern architecture combining multiple technologies:
                              │
                      ┌───────▼───────┐     ┌───────────────┐
                      │    Pinecone   │◀────▶  AWS S3 &     │
-                     │ Vector Search │     │   Snowflake   │
+                     │ Vector Search │     │   PostgreSQL  │
                      └───────────────┘     └───────────────┘
 ```
 
 ### Data Flow
 
-1. Documents from AACRAO EDGE and Northeastern's FCE regulations are stored in both AWS S3 and Snowflake database
+1. Documents from AACRAO EDGE and Northeastern's FCE regulations are stored in AWS S3
 2. Document text is processed, embedded, and indexed in Pinecone
 3. User queries via Streamlit UI are sent to FastAPI backend
 4. Queries are embedded and used for semantic search in Pinecone
 5. Relevant context is retrieved and combined with the user query
 6. OpenAI's GPT-4o generates accurate, context-informed responses
-7. Historical query data and results are stored in Snowflake for analytics and continuous improvement
 
 ## 📊 Data Sources
 
