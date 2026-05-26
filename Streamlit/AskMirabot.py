@@ -11,6 +11,36 @@ import numpy as np
 load_dotenv()
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://fastapi:8000")
 CHAT_URL = f"{FASTAPI_URL}/chat"
+AUTH_CHECK_URL = f"{FASTAPI_URL}/auth/protected"
+
+
+def _force_logout(msg: str):
+    st.session_state["logged_in"] = False
+    st.session_state["access_token"] = None
+    st.session_state["auth_username"] = None
+    st.warning(msg)
+    st.rerun()
+
+
+def _verify_session() -> bool:
+    """Re-check the JWT with FastAPI before each chat action."""
+    token = st.session_state.get("access_token")
+    if not token:
+        _force_logout("Please log in.")
+        return False
+    try:
+        r = requests.get(
+            AUTH_CHECK_URL,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        if r.status_code == 200:
+            return True
+        _force_logout("Your session expired — please log in again.")
+        return False
+    except requests.RequestException:
+        _force_logout("Auth service unreachable — please log in again.")
+        return False
 
 # Initialize OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -146,6 +176,8 @@ def show_bot():
     # Prompt
     user_input = st.chat_input("Type your question here…")
     if user_input:
+        if not _verify_session():
+            return
         st.session_state.messages.append({"role": "user", "content": user_input})
         st.chat_message("user").write(user_input)
         

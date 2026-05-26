@@ -1,7 +1,7 @@
 # AskMira: AI-Powered Foreign Credit Evaluation Assistant for Northeastern University
 
 <div align="center">
-  <img src="https://github.com/Saurabh-Vyawahare/AskMira/blob/main/Streamlit/AskMira%20Logo.png" alt="AskMira Logo" width="200"/>
+  <img src="AskMira Logo.png" alt="AskMira Logo" width="200"/>
   <p><em>Streamlining Northeastern University's foreign credit evaluation process through AI</em></p>
   
   [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
@@ -82,8 +82,6 @@ For production deployment, follow these steps:
 3. Clone the repository and set up your `.env` file
 4. Run `docker-compose up -d` to start in detached mode
 5. Access your application at your EC2 public DNS
-
-See detailed deployment instructions in the [Deployment Guide](docs/deployment.md).
 
 ## 🏗 Architecture
 
