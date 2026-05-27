@@ -28,6 +28,12 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+# Model / chunking configuration (env-driven, defaults preserve current behavior)
+EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002")
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "1024"))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+
 # Initialize S3 client
 s3 = boto3.client(
     's3',
@@ -44,8 +50,8 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Text splitter for chunking documents
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
+    chunk_size=CHUNK_SIZE,
+    chunk_overlap=CHUNK_OVERLAP,
     length_function=len,
 )
 
@@ -54,17 +60,17 @@ def create_embedding(text):
     try:
         # Using ada-002 which produces 1536 dimensions
         response = openai.Embedding.create(
-            model="text-embedding-ada-002",
+            model=EMBEDDING_MODEL,
             input=text
         )
-        
+
         # Get the full 1536-dimension vector
         full_vector = response['data'][0]['embedding']
-        
+
         # Resize to 1024 dimensions using PCA-like approach
         # We'll use a simple method: take every 3rd element and discard the rest
         # This is a simplification but should work for our purposes
-        resized_vector = full_vector[:1024]
+        resized_vector = full_vector[:EMBEDDING_DIM]
         
         # Normalize the vector (important for cosine similarity)
         norm = np.linalg.norm(resized_vector)

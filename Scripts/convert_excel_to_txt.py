@@ -22,6 +22,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 # Load environment variables
 load_dotenv()
 
+# Model / chunking / key configuration (env-driven, defaults preserve current behavior)
+EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002")
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "1024"))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
+FCE_EXCEL_KEY = os.getenv("FCE_EXCEL_KEY", "FCE Regulations/FCE Equivalency.xlsx")
+FCE_TEXT_KEY = os.getenv("FCE_TEXT_KEY", "FCE Regulations TXT/FCE Equivalency.txt")
+
 # Initialize clients
 s3 = boto3.client(
     's3',
@@ -37,23 +45,23 @@ index = pc.Index(index_name)
 
 # Text splitter setup
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
+    chunk_size=CHUNK_SIZE,
+    chunk_overlap=CHUNK_OVERLAP,
     length_function=len,
 )
 
 def create_embedding(text):
     """Create an embedding using OpenAI's API and resize to 1024 dimensions"""
     response = openai.Embedding.create(
-        model="text-embedding-ada-002",
+        model=EMBEDDING_MODEL,
         input=text
     )
-    
+
     # Get the full 1536-dimension vector
     full_vector = response['data'][0]['embedding']
-    
+
     # Resize to 1024 dimensions by taking the first 1024 values
-    resized_vector = full_vector[:1024]
+    resized_vector = full_vector[:EMBEDDING_DIM]
     
     # Normalize the vector
     norm = np.linalg.norm(resized_vector)
@@ -174,8 +182,8 @@ def process_and_index_text(text_content, s3_key):
 def main():
     # Set your bucket and file paths
     bucket = os.getenv('S3_BUCKET')
-    excel_key = "FCE Regulations/FCE Equivalency.xlsx"
-    text_key = "FCE Regulations TXT/FCE Equivalency.txt"
+    excel_key = FCE_EXCEL_KEY
+    text_key = FCE_TEXT_KEY
     
     # Create a temporary file
     with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:

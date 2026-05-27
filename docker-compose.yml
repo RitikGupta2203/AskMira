@@ -16,7 +16,7 @@ services:
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - PINECONE_ENV=${PINECONE_ENV}
       - PINECONE_INDEX=${PINECONE_INDEX}
-      # --- NEW: Postgres connection (replaces Snowflake) ---
+      # --- NEW: Postgres connection ---
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER}

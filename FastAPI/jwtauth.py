@@ -16,11 +16,12 @@ from psycopg2.extras import RealDictCursor
 
 
 
-
 # load vars if this file is run stand‑alone
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+JWT_EXPIRY_MINUTES = int(os.getenv("JWT_EXPIRY_MINUTES", "60"))
+
 
 router = APIRouter()
 security = HTTPBearer() # Extracts token from "Authorization: Bearer <token>"
@@ -56,7 +57,7 @@ def create_jwt_token(data: dict) -> str:
     Used after successful login.
     
     '''
-    exp = datetime.now(timezone.utc) + timedelta(minutes=60)
+    exp = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRY_MINUTES)
     payload = {"exp": exp, **data}
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 

@@ -6,12 +6,30 @@ import openai
 from pinecone import Pinecone
 import numpy as np
 
-# Load environment variables
+
 # Load environment variables
 load_dotenv()
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://fastapi:8000")
 CHAT_URL = f"{FASTAPI_URL}/chat"
 AUTH_CHECK_URL = f"{FASTAPI_URL}/auth/protected"
+
+# RAG / model configuration (env-driven, defaults preserve current behavior)
+EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002")
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "1024"))
+CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o")
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
+CHAT_MAX_TOKENS = int(os.getenv("CHAT_MAX_TOKENS", "8000"))
+CHAT_TEMPERATURE = float(os.getenv("CHAT_TEMPERATURE", "0.5"))
+SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.75"))
+
+
+# Initialize OpenAI
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize Pinecone
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+index_name = os.getenv("PINECONE_INDEX")
+index = pc.Index(index_name)
 
 
 def _force_logout(msg: str):
@@ -42,26 +60,18 @@ def _verify_session() -> bool:
         _force_logout("Auth service unreachable — please log in again.")
         return False
 
-# Initialize OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# Initialize Pinecone
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-index_name = os.getenv("PINECONE_INDEX")
-index = pc.Index(index_name)
-
 def create_embedding(text):
     """Create an embedding using OpenAI's API and resize to 1024 dimensions"""
     response = openai.Embedding.create(
-        model="text-embedding-ada-002",
+        model=EMBEDDING_MODEL,
         input=text
     )
-    
+
     # Get the full 1536-dimension vector
     full_vector = response['data'][0]['embedding']
-    
+
     # Resize to 1024 dimensions by taking the first 1024 values
-    resized_vector = full_vector[:1024]
+    resized_vector = full_vector[:EMBEDDING_DIM]
     
     # Normalize the vector
     norm = np.linalg.norm(resized_vector)
@@ -69,7 +79,7 @@ def create_embedding(text):
     
     return normalized_vector
 
-def query_pinecone(query, top_k=5):
+def query_pinecone(query, top_k=RAG_TOP_K):
     """Query Pinecone index and return top matches"""
     # Create query embedding
     query_vector = create_embedding(query)
@@ -81,6 +91,7 @@ def query_pinecone(query, top_k=5):
         include_metadata=True
     )
     
+    results.matches = [m for m in results.matches if m.score >= SIMILARITY_THRESHOLD]
     return results
 
 def format_context(results):
@@ -106,6 +117,12 @@ def get_rag_response(query):
         # Step 1: Retrieve relevant context from Pinecone
         st.write("🔍 Searching knowledge base...")
         results = query_pinecone(query)
+
+        # No chunks passed the relevance bar → refuse without calling the LLM
+        if not results.matches:
+            return ("I can only answer questions about international academic credentials "
+                    "and Northeastern's FCE policies. Your question doesn't appear to match "
+                    "anything in my knowledge base.")
         
         # Step 2: Format context
         context = format_context(results)
@@ -123,13 +140,13 @@ Always cite your sources when answering."""
         # Step 4: Call OpenAI for completion - using gpt-4o
         st.write("🤔 Thinking...")
         response = openai.ChatCompletion.create(
-            model="gpt-4o",  # Updated to the latest model
+            model=CHAT_MODEL,  # Updated to the latest model
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Here is the context to use for answering the question:\n\n{context}\n\nQuestion: {query}"}
             ],
-            max_tokens=8000,
-            temperature=0.5,
+            max_tokens=CHAT_MAX_TOKENS,
+            temperature=CHAT_TEMPERATURE,
         )
         
         return response.choices[0].message['content'].strip()
