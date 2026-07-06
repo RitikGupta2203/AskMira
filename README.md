@@ -191,10 +191,6 @@ AskMira/
 - Pinecone for vector search capabilities
 - AWS for cloud infrastructure
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🤝 Contact
 
 For questions or support regarding this application, please contact:
